@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3 uid="uid://card001"]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1_card"]
+
+[resource]
+script = ExtResource("1_card")
+id = "hellfire_strike"
+display_name = "地狱烈焰斩"
+description = "造成8点火焰伤害"
+cost = 1
+card_type = 0
+rarity = 0
+target_type = 1
+exhaust = false
+ethereal = false
+damage = 8
+block = 0
+draw = 0

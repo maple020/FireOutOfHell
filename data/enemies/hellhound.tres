@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3 uid="uid://enemy002"]
+
+[ext_resource type="Script" path="res://scripts/data/enemy_data.gd" id="1_enemy"]
+
+[resource]
+script = ExtResource("1_enemy")
+id = "hellhound"
+display_name = "地狱犬"
+max_hp = 35
+intent_pool = PackedStringArray("attack:10", "attack:8", "defend:5")

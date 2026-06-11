@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://relic004"]
+
+[ext_resource type="Script" path="res://scripts/data/relic_data.gd" id="1_relic"]
+
+[resource]
+script = ExtResource("1_relic")
+id = "soul_shard"
+display_name = "灵魂碎片"
+description = "受伤时有30%概率格挡1点伤害"
+rarity = 0

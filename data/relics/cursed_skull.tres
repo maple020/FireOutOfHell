@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://relic010"]
+
+[ext_resource type="Script" path="res://scripts/data/relic_data.gd" id="1_relic"]
+
+[resource]
+script = ExtResource("1_relic")
+id = "cursed_skull"
+display_name = "诅咒头骨"
+description = "每回合开始时抽牌+1，但受到伤害+10%"
+rarity = 1

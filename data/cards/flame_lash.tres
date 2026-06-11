@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3 uid="uid://card004"]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1_card"]
+
+[resource]
+script = ExtResource("1_card")
+id = "flame_lash"
+display_name = "烈焰鞭笞"
+description = "造成5点伤害，抽1张牌"
+cost = 1
+card_type = 0
+rarity = 0
+target_type = 1
+exhaust = false
+ethereal = false
+damage = 5
+block = 0
+draw = 1

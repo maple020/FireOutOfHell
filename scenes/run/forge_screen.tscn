@@ -1,0 +1,62 @@
+[gd_scene load_steps=2 format=3 uid="uid://forgescreen001"]
+
+[ext_resource type="Script" path="res://scripts/run/forge_screen.gd" id="1_forge"]
+
+[node name="ForgeScreen" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_forge")
+
+[node name="Background" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.15, 0.08, 0.05, 1)
+
+[node name="TitleLabel" type="Label" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 50.0
+offset_right = 100.0
+offset_bottom = 100.0
+text = "熔炉"
+horizontal_alignment = 1
+
+[node name="OptionsContainer" type="VBoxContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -150.0
+offset_right = 200.0
+offset_bottom = 150.0
+alignment = 1
+
+[node name="HealButton" type="Button" parent="OptionsContainer"]
+custom_minimum_size = Vector2(0, 60)
+text = "休息回血 (+30% HP)"
+
+[node name="UpgradeButton" type="Button" parent="OptionsContainer"]
+custom_minimum_size = Vector2(0, 60)
+text = "升级一张牌"
+
+[node name="RemoveButton" type="Button" parent="OptionsContainer"]
+custom_minimum_size = Vector2(0, 60)
+text = "移除一张牌"
+
+[node name="LeaveButton" type="Button" parent="."]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -80.0
+offset_top = -80.0
+offset_right = 80.0
+offset_bottom = -40.0
+text = "离开"

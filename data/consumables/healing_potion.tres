@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=2 format=3 uid="uid://consumable001"]
+
+[ext_resource type="Script" path="res://scripts/data/consumable_data.gd" id="1_consumable"]
+
+[resource]
+script = ExtResource("1_consumable")
+id = "healing_potion"
+display_name = "治疗药水"
+description = "恢复10点生命"
+type = 0
+value = 10
+rarity = 0

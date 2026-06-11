@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3 uid="uid://relic012"]
+
+[ext_resource type="Script" path="res://scripts/data/relic_data.gd" id="1_relic"]
+
+[resource]
+script = ExtResource("1_relic")
+id = "demon_contract"
+display_name = "恶魔契约"
+description = "每场战斗多获得1张随机卡牌奖励"
+rarity = 2

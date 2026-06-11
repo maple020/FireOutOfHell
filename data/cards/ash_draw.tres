@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3 uid="uid://card003"]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1_card"]
+
+[resource]
+script = ExtResource("1_card")
+id = "ash_draw"
+display_name = "灰烬抽牌"
+description = "抽2张牌"
+cost = 0
+card_type = 1
+rarity = 0
+target_type = 3
+exhaust = false
+ethereal = false
+damage = 0
+block = 0
+draw = 2

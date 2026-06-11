@@ -4,6 +4,7 @@ extends Control
 
 signal card_selected(card_data: CardData)
 signal card_hovered(card_data: CardData)
+signal card_play_animation_finished(card_data: CardData)
 
 @export var card_data: CardData
 
@@ -31,6 +32,15 @@ func set_playable(is_playable: bool) -> void:
 	modulate = Color(1.0, 1.0, 1.0, 1.0) if is_playable else Color(0.55, 0.55, 0.55, 0.9)
 
 
+func set_targeting_highlight(enabled: bool) -> void:
+	if enabled:
+		modulate = Color(1.2, 1.2, 0.8, 1.0)
+	elif _is_playable:
+		modulate = Color(1.0, 1.0, 1.0, 1.0)
+	else:
+		modulate = Color(0.55, 0.55, 0.55, 0.9)
+
+
 func _gui_input(event: InputEvent) -> void:
 	if not _is_playable or card_data == null:
 		return
@@ -50,3 +60,29 @@ func _update_display() -> void:
 	_name_label.text = card_data.display_name
 	_cost_label.text = str(card_data.cost)
 	_desc_label.text = card_data.description
+
+
+func play_release_animation(target_position: Vector2, duration: float = 0.4) -> void:
+	if _is_playable == false:
+		return
+	
+	var tween := create_tween()
+	tween.set_parallel(true)
+	
+	# 飞向目标位置
+	tween.tween_property(self, "global_position", target_position, duration).set_ease(Tween.EASE_IN)
+	
+	# 同时缩放和旋转
+	tween.tween_property(self, "scale", Vector2(0.5, 0.5), duration)
+	tween.tween_property(self, "rotation_degrees", 360, duration)
+	
+	tween.set_parallel(false)
+	tween.tween_callback(_on_release_animation_finished)
+
+
+func _on_release_animation_finished() -> void:
+	card_play_animation_finished.emit(card_data)
+	# 重置状态
+	scale = Vector2.ONE
+	rotation_degrees = 0
+	visible = false

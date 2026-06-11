@@ -8,6 +8,8 @@ const DamageEffect := preload("res://scripts/combat/effects/damage_effect.gd")
 const BlockEffect := preload("res://scripts/combat/effects/block_effect.gd")
 const DrawEffect := preload("res://scripts/combat/effects/draw_effect.gd")
 
+class_name CombatManager
+
 signal state_changed(new_state: CombatState.State)
 signal energy_changed(current_energy: int, max_energy: int)
 signal card_played(card_data: CardData, target: Node)
@@ -32,9 +34,17 @@ var deck_manager: DeckManager
 var effect_queue: EffectQueue
 var _selected_card: CardData
 
+## 动画倍率：1.0 = 正常，2.0 = 快速
+var animation_speed: float = 1.0
+
 @onready var _hand_area: HBoxContainer = get_node_or_null("CombatUI/HandArea")
 @onready var _enemy_area: Control = get_node_or_null("CombatUI/EnemyArea")
-@onready var _player_soul: Node = get_node_or_null("CombatUI/PlayerArea/PlayerSoul")
+@onready var _player_soul: PlayerSoul = get_node_or_null("CombatUI/PlayerArea/PlayerSoul") as PlayerSoul
+@onready var _end_turn_button: Button = get_node_or_null("CombatUI/EndTurnButton")
+@onready var _energy_label: Label = get_node_or_null("CombatUI/EnergyLabel")
+@onready var _screen_shake: ScreenShake = get_node_or_null("ScreenShake")
+@onready var _sound_manager: SoundManager = get_node_or_null("SoundManager")
+@onready var _speed_toggle: Button = get_node_or_null("CombatUI/SpeedToggleButton")
 
 
 func _ready() -> void:
@@ -44,6 +54,9 @@ func _ready() -> void:
 	_connect_scene_nodes()
 	if not starting_deck.is_empty():
 		setup_combat_deck(starting_deck, initial_seed)
+	
+	# 自动开始战斗（测试用）
+	call_deferred("_auto_start_combat")
 
 
 
@@ -65,6 +78,7 @@ func start_player_turn() -> void:
 	_ensure_deck_manager()
 	deck_manager.draw_to_hand_limit()
 	change_state(CombatState.State.PLAYER_TURN)
+	_prepare_enemy_intents()
 
 
 func play_card(card_data: CardData, target: Node) -> void:
@@ -87,6 +101,11 @@ func play_card(card_data: CardData, target: Node) -> void:
 	change_state(CombatState.State.RESOLVING)
 	card_played.emit(card_data, target)
 	deck_manager.move_played_card(card_data)
+	
+	# 播放卡牌释放动画
+	_play_card_release_animation(card_data, target)
+	
+	# 构建并执行效果
 	_build_and_execute_effects(card_data, target)
 
 
@@ -126,6 +145,29 @@ func end_turn() -> void:
 	deck_manager.discard_hand()
 	change_state(CombatState.State.ENEMY_TURN)
 	turn_ended.emit()
+	# 播放回合结束音效
+	if _sound_manager != null:
+		_sound_manager.play_turn_end()
+	_prepare_enemy_intents()
+	_execute_enemy_turn()
+
+
+func _execute_enemy_turn() -> void:
+	var living_enemies: Array[Node] = _get_living_enemies()
+	for enemy in living_enemies:
+		var enemy_actor: EnemyActor = enemy as EnemyActor
+		if enemy_actor != null:
+			enemy_actor.execute_intent(_player_soul)
+	change_state(CombatState.State.PLAYER_TURN)
+	start_player_turn()
+
+
+func _prepare_enemy_intents() -> void:
+	var living_enemies: Array[Node] = _get_living_enemies()
+	for enemy in living_enemies:
+		var enemy_actor: EnemyActor = enemy as EnemyActor
+		if enemy_actor != null:
+			enemy_actor.prepare_next_intent()
 
 
 func get_current_hand() -> Array[CardData]:
@@ -166,13 +208,23 @@ func _ensure_effect_queue() -> void:
 
 
 func _connect_scene_nodes() -> void:
+	if _player_soul != null and not _player_soul.is_connected("player_died", Callable(self, "_on_player_died")):
+		_player_soul.player_died.connect(_on_player_died)
 	if _enemy_area != null:
 		for child in _enemy_area.get_children():
 			var enemy: EnemyActor = child as EnemyActor
-			if enemy != null and not enemy.is_connected("enemy_selected", Callable(self, "_on_enemy_selected")):
-				enemy.connect("enemy_selected", Callable(self, "_on_enemy_selected"))
+			if enemy != null:
+				if not enemy.is_connected("enemy_selected", Callable(self, "_on_enemy_selected")):
+					enemy.connect("enemy_selected", Callable(self, "_on_enemy_selected"))
+				if not enemy.is_connected("enemy_died", Callable(self, "_on_enemy_died")):
+					enemy.connect("enemy_died", Callable(self, "_on_enemy_died"))
 	if _hand_area != null:
 		_refresh_hand_ui(deck_manager.get_hand())
+	if _end_turn_button != null and not _end_turn_button.is_connected("pressed", Callable(self, "_on_end_turn_pressed")):
+		_end_turn_button.pressed.connect(_on_end_turn_pressed)
+	if _speed_toggle != null and not _speed_toggle.is_connected("pressed", Callable(self, "_on_speed_toggle_pressed")):
+		_speed_toggle.pressed.connect(_on_speed_toggle_pressed)
+	energy_changed.connect(_on_energy_changed)
 
 
 func _connect_deck_manager_signals() -> void:
@@ -198,6 +250,143 @@ func _on_piles_changed() -> void:
 
 func _on_enemy_selected(enemy: Node) -> void:
 	select_target(enemy)
+
+
+func _on_player_died() -> void:
+	if current_state == CombatState.State.VICTORY or current_state == CombatState.State.DEFEAT:
+		return
+	change_state(CombatState.State.DEFEAT)
+	# 播放失败音效
+	if _sound_manager != null:
+		_sound_manager.play_defeat()
+	combat_finished.emit(false)
+
+
+func _on_enemy_died() -> void:
+	if current_state == CombatState.State.VICTORY or current_state == CombatState.State.DEFEAT:
+		return
+	var living: Array[Node] = _get_living_enemies()
+	if living.is_empty():
+		change_state(CombatState.State.VICTORY)
+		# 播放胜利音效
+		if _sound_manager != null:
+			_sound_manager.play_victory()
+		combat_finished.emit(true)
+		# 延迟返回地图/奖励
+		call_deferred("_handle_combat_victory")
+
+
+func _on_end_turn_pressed() -> void:
+	if current_state == CombatState.State.PLAYER_TURN:
+		end_turn()
+
+
+func _on_energy_changed(current: int, maximum: int) -> void:
+	if _energy_label != null:
+		_energy_label.text = "能量: %d/%d" % [current, maximum]
+
+
+func _handle_combat_victory() -> void:
+	# 通知 GameManager 战斗胜利
+	var game_manager := get_node_or_null("/root/GameManager")
+	if game_manager != null and game_manager.has_method("enter_reward"):
+		# 生成 3 张奖励卡牌
+		var reward_cards: Array[CardData] = []
+		var all_card_ids := ["hellfire_strike", "soul_shield", "ash_draw", "flame_lash"]
+		all_card_ids.shuffle()
+		for i in range(min(3, all_card_ids.size())):
+			var path := "res://data/cards/%s.tres" % all_card_ids[i]
+			if ResourceLoader.exists(path):
+				var card: CardData = load(path)
+				if card != null:
+					reward_cards.append(card)
+		
+		if not reward_cards.is_empty():
+			game_manager.enter_reward(reward_cards)
+		else:
+			game_manager.return_to_map()
+	else:
+		# 如果没有 GameManager，直接返回地图
+		if game_manager != null and game_manager.has_method("return_to_map"):
+			game_manager.return_to_map()
+
+
+func _auto_start_combat() -> void:
+	# 如果没有牌组，自动加载默认牌组
+	if deck_manager == null or deck_manager.get_pile_sizes().get("draw", 0) == 0:
+		var default_deck: Array[CardData] = []
+		var default_ids := ["hellfire_strike", "hellfire_strike", "soul_shield", "soul_shield", "ash_draw", "flame_lash", "flame_lash"]
+		for card_id in default_ids:
+			var path := "res://data/cards/%s.tres" % card_id
+			if ResourceLoader.exists(path):
+				var card: CardData = load(path)
+				if card != null:
+					default_deck.append(card)
+		
+		if not default_deck.is_empty():
+			setup_combat_deck(default_deck, 12345)
+	
+	# 自动开始玩家回合
+	if current_state == CombatState.State.IDLE:
+		# 确保有敌人
+		if _enemies.is_empty():
+			# 创建测试敌人
+			var enemy_scene := load("res://scenes/entities/enemy.tscn") as PackedScene
+			if enemy_scene != null:
+				var enemy_data := load("res://data/enemies/imp.tres")
+				for i in range(2):
+					var enemy: EnemyActor = enemy_scene.instantiate()
+					enemy.enemy_data = enemy_data
+					enemy.position = Vector2(200 + i * 200, 200)
+					get_node("CombatUI/EnemyArea").add_child(enemy)
+					_enemies.append(enemy)
+					enemy.enemy_died.connect(_on_enemy_died)
+					enemy.enemy_selected.connect(_on_enemy_selected)
+		start_player_turn()
+
+
+func _on_speed_toggle_pressed() -> void:
+	# 切换动画倍率
+	if animation_speed == 1.0:
+		animation_speed = 2.0
+		if _speed_toggle != null:
+			_speed_toggle.text = "速度: 2x"
+	else:
+		animation_speed = 1.0
+		if _speed_toggle != null:
+			_speed_toggle.text = "速度: 1x"
+
+
+func _play_hit_effect(target: Node, effect_type: String, color: Color) -> void:
+	if target == null or not target is Node2D:
+		return
+	
+	var hit_effect := preload("res://scripts/ui/hit_effect.gd").new() as HitEffect
+	if hit_effect != null:
+		hit_effect.effect_type = effect_type
+		(target as Node2D).add_child(hit_effect)
+		hit_effect.play_effect(color)
+
+
+func _play_card_release_animation(card_data: CardData, target: Node) -> void:
+	# 查找手牌中的卡牌视图
+	if _hand_area == null:
+		return
+	
+	for child in _hand_area.get_children():
+		var card_view: CardView = child as CardView
+		if card_view != null and card_view.card_data == card_data:
+			# 计算目标位置
+			var target_pos: Vector2 = Vector2.ZERO
+			if target != null and target is Node2D:
+				target_pos = (target as Node2D).global_position
+			elif _enemy_area != null:
+				target_pos = _enemy_area.global_position
+			
+			# 播放动画（应用动画倍率）
+			var anim_duration: float = 0.4 / animation_speed
+			card_view.play_release_animation(target_pos, anim_duration)
+			break
 
 
 func _refresh_hand_ui(hand: Array[CardData]) -> void:
@@ -300,13 +489,29 @@ func _build_and_execute_effects(card_data: CardData, target: Node) -> void:
 	if card_data.damage > 0:
 		var damage_target: Node = target if target != null else _player_soul
 		effect_queue.add_effect(DamageEffect.new(self, damage_target, card_data.damage))
+		# 播放火焰伤害特效
+		_play_hit_effect(damage_target, "damage", Color(1, 0.4, 0.2))
+		# 播放伤害音效
+		if _sound_manager != null:
+			_sound_manager.play_damage()
+		
+		# 高伤害触发屏幕震动
+		if card_data.damage >= 10 and _screen_shake != null:
+			_screen_shake.start_shake(5.0, 0.2)
 
 	if card_data.block > 0:
 		var block_target: Node = target if target != null else _player_soul
 		effect_queue.add_effect(BlockEffect.new(self, block_target, card_data.block))
+		# 播放护盾特效
+		_play_hit_effect(block_target, "block", Color(0.3, 0.7, 1))
+		# 播放格挡音效
+		if _sound_manager != null:
+			_sound_manager.play_block()
 
 	if card_data.draw > 0:
 		effect_queue.add_effect(DrawEffect.new(self, deck_manager, card_data.draw))
+		# 播放治疗/恢复特效
+		_play_hit_effect(_player_soul, "heal", Color(0.3, 1, 0.3))
 
 	if effect_queue.get_queue_size() > 0:
 		effect_queue.execute_all()

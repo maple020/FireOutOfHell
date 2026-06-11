@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=2 format=3 uid="uid://char001"]
+
+[ext_resource type="Script" path="res://scripts/data/character_data.gd" id="1_char"]
+
+[resource]
+script = ExtResource("1_char")
+id = "soul_reaver"
+display_name = "灵魂收割者"
+description = "以火焰与灵魂之力战斗的堕落灵魂"
+max_hp = 80
+starting_deck = PackedStringArray("hellfire_strike", "hellfire_strike", "soul_shield", "soul_shield", "ash_draw", "flame_lash", "flame_lash")
+starting_energy = 3
+starting_relics = PackedStringArray()

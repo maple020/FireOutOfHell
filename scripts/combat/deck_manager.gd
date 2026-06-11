@@ -219,3 +219,12 @@ func _shuffle_draw_pile() -> void:
 func _emit_pile_updates() -> void:
 	piles_changed.emit()
 	hand_changed.emit(_hand.duplicate())
+
+
+func get_pile_sizes() -> Dictionary:
+	return {
+		"draw": _draw_pile.size(),
+		"hand": _hand.size(),
+		"discard": _discard_pile.size(),
+		"exhaust": _exhaust_pile.size()
+	}

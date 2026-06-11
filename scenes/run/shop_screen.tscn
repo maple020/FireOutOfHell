@@ -1,0 +1,81 @@
+[gd_scene load_steps=2 format=3 uid="uid://shopscreen001"]
+
+[ext_resource type="Script" path="res://scripts/run/shop_screen.gd" id="1_shop"]
+
+[node name="ShopScreen" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_shop")
+
+[node name="Background" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.08, 0.05, 0.12, 1)
+
+[node name="TitleLabel" type="Label" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 30.0
+offset_right = 100.0
+offset_bottom = 80.0
+text = "黑市"
+horizontal_alignment = 1
+
+[node name="GoldLabel" type="Label" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -200.0
+offset_top = 30.0
+offset_right = -20.0
+offset_bottom = 80.0
+text = "金币: 100"
+horizontal_alignment = 2
+
+[node name="CardsContainer" type="HBoxContainer" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -500.0
+offset_top = 120.0
+offset_right = 500.0
+offset_bottom = 320.0
+alignment = 1
+
+[node name="RelicsContainer" type="HBoxContainer" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -400.0
+offset_top = 350.0
+offset_right = 400.0
+offset_bottom = 500.0
+alignment = 1
+
+[node name="ConsumablesContainer" type="HBoxContainer" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -400.0
+offset_top = 520.0
+offset_right = 400.0
+offset_bottom = 670.0
+alignment = 1
+
+[node name="LeaveButton" type="Button" parent="."]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -80.0
+offset_top = -80.0
+offset_right = 80.0
+offset_bottom = -40.0
+text = "离开"

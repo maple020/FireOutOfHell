@@ -1,7 +1,10 @@
-[gd_scene load_steps=3 format=3 uid="uid://combat001"]
+[gd_scene load_steps=5 format=3 uid="uid://combat001"]
 
 [ext_resource type="Script" path="res://scripts/combat/combat_manager.gd" id="1_combat"]
 [ext_resource type="PackedScene" uid="uid://playersoul001" path="res://scenes/entities/player_soul.tscn" id="2_player"]
+[ext_resource type="Script" path="res://scripts/ui/screen_shake.gd" id="3_shake"]
+[ext_resource type="Script" path="res://scripts/combat/sound_manager.gd" id="4_sound"]
+[ext_resource type="PackedScene" uid="uid://enemy001" path="res://scenes/entities/enemy.tscn" id="5_enemy"]
 
 [node name="CombatScene" type="Node2D"]
 script = ExtResource("1_combat")
@@ -51,3 +54,32 @@ offset_bottom = -20.0
 grow_horizontal = 0
 grow_vertical = 0
 text = "结束回合"
+
+[node name="EnergyLabel" type="Label" parent="CombatUI"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -200.0
+offset_top = 40.0
+offset_right = -40.0
+offset_bottom = 80.0
+text = "能量: 3/3"
+horizontal_alignment = 2
+
+[node name="SpeedToggleButton" type="Button" parent="CombatUI"]
+anchors_preset = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 160.0
+offset_bottom = 60.0
+text = "速度: 1x"
+
+[node name="ScreenShake" type="Node" parent="."]
+script = ExtResource("3_shake")
+
+[node name="SoundManager" type="Node" parent="."]
+script = ExtResource("4_sound")
+
+[node name="Enemies" type="Node" parent="CombatUI/EnemyArea"]

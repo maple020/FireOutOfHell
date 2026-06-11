@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3 uid="uid://card002"]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1_card"]
+
+[resource]
+script = ExtResource("1_card")
+id = "soul_shield"
+display_name = "灵魂护盾"
+description = "获得6点护盾"
+cost = 1
+card_type = 1
+rarity = 0
+target_type = 3
+exhaust = false
+ethereal = false
+damage = 0
+block = 6
+draw = 0
