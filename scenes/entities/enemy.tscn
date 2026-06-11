@@ -1,0 +1,30 @@
+[gd_scene load_steps=2 format=3 uid="uid://enemy001"]
+
+[ext_resource type="Script" path="res://scripts/entities/enemy.gd" id="1_enemy"]
+
+[node name="Enemy" type="Node2D"]
+script = ExtResource("1_enemy")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+
+[node name="IntentIcon" type="TextureRect" parent="."]
+offset_left = -24.0
+offset_top = -80.0
+offset_right = 24.0
+offset_bottom = -32.0
+
+[node name="HPLabel" type="Label" parent="."]
+offset_left = -40.0
+offset_top = 40.0
+offset_right = 40.0
+offset_bottom = 63.0
+text = "50"
+horizontal_alignment = 1
+
+[node name="SelectButton" type="Button" parent="."]
+offset_left = -60.0
+offset_top = -100.0
+offset_right = 60.0
+offset_bottom = 80.0
+flat = true
+text = ""
