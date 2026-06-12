@@ -560,12 +560,71 @@ RunManager.start_new_run(12345)
 
 ### 📋 待完善事项（优先级排序）
 
-1. **🟡 战斗界面完善**：地图点击战斗节点后进入完整可玩的战斗界面（当前缺少自动初始化）
-2. **🟡 熔炉/商店流程**：离开后正确返回地图
-3. **🟡 美术资源**：卡牌背景、敌人立绘、粒子纹理、音效文件
-4. **🟢 事件节点**：事件场景与叙事选择
-5. **🟢 设置界面**：音量/震动/动画速度调节
-6. **🟢 Boss 战规则**：特殊机制与更详细结算统计
+1. **🟡 美术资源**：卡牌背景、敌人立绘、粒子纹理、音效文件
+2. **🟢 设置界面**：音量/震动/动画速度调节
+3. **🟢 Boss 战规则**：特殊机制与更详细结算统计
+4. **🟢 熔炉功能**：升级/删牌具体逻辑实现
+5. **🟢 商店功能**：购买后同步 RunManager 状态
+
+---
+
+### 📊 完整游戏流程评估报告（2026-06-12）
+
+#### 语法/编译评估
+
+| 序号 | 检查项 | 状态 | 说明 |
+|:----:|--------|:----:|------|
+| 1 | `combat_manager.gd` `class_name` 重复声明 | ✅ 已修复 | 删除重复行 |
+| 2 | `enemy.gd` `@icon` 注解位置 | ✅ 已修复 | 移至脚本第一行 |
+| 3 | `deck_manager.gd` `get_pile_sizes()` 重复定义 | ✅ 已修复 | 删除重复函数 |
+| 4 | `combat_manager.gd` `_enemies` 未声明 | ✅ 已修复 | 添加 var 声明 |
+| 5 | `effect_queue.gd` `is_processing()` 覆盖原生方法 | ✅ 已修复 | 重命名为 `is_queue_processing()` |
+| 6 | `player_soul.gd` `_hp_bar`/`_block_bar` 未声明 | ✅ 已修复 | 添加 `@onready var` |
+| 7 | 所有 `.tscn` 场景引用路径 | ✅ 正常 | 指向现有文件 |
+| 8 | Resource 类定义 | ✅ 正常 | 字段类型正确 |
+| 9 | 效果脚本类继承 | ✅ 正常 | BaseEffect 继承链正确 |
+| 10 | Autoload 配置 | ✅ 正常 | `project.godot` 已注册 |
+
+#### 游戏流程链路评估
+
+| 环节 | 关键方法 | 状态 | 说明 |
+|:----:|----------|:----:|------|
+| 启动 | `project.godot` → MainMenu | ✅ | `main_menu.tscn` |
+| 「开始游戏」 | `start_new_run()` → 角色加载 → 地图生成 | ✅ | Soul Reaver + 默认起始牌组 |
+| 「继续游戏」 | `load_run()` → SaveManager | ✅ | 存档不存在时降级为新游戏 |
+| 「退出」 | `get_tree().quit()` | ✅ | |
+| 地图生成 | `MapGenerator.generate(seed)` | ✅ | 12 层分层地图，6 类节点 |
+| 地图节点选取 | `node_selected` → `visit_node` | ✅ | 自下而上布局，仅高亮当前层 |
+| 进入战斗 | `enter_combat(enemy_path)` → `goto_scene` | ✅ | 敌方数据从地图节点传入，按层分配敌人 |
+| 战斗初始化 | `_auto_start_combat()` | ✅ | 自动加载牌组 + 创建敌人 |
+| 打牌流程 | `play_card()` → 能量检查 → 效果队列 | ✅ | 伤害/格挡/抽牌效果正确执行 |
+| 效果执行 | `EffectQueue.execute_all()` | ✅ | 顺序执行，完成后切回 PLAYER_TURN |
+| 敌人回合 | `_execute_enemy_turn()` → `execute_intent()` | ✅ | 按意图对玩家造成伤害/防御 |
+| 战斗胜利 → 奖励 | `_handle_combat_victory()` → `enter_reward()` | ✅ | 随机 3 选 1 卡牌奖励 |
+| 奖励选择 | `card_selected` → `add_card_to_deck` | ✅ | 选择后退回地图 |
+| 跳过奖励 | `reward_skipped` → `return_to_map()` | ✅ | 跳过后退回地图 |
+| 熔炉界面 | ForgeScreen 回血/升级/删牌 | ✅ | 按钮可点击 |
+| 熔炉 → 离开 | `leave_requested` → `return_to_map()` | ✅ | 信号已连接 |
+| 商店界面 | ShopScreen 购买卡牌/遗物/消耗品 | ⚠️ | 本地扣金币，未同步 RunManager |
+| 商店 → 离开 | `leave_requested` → `return_to_map()` | ✅ | 信号已连接 |
+| 事件节点 | `EventScreen` 随机叙事选择 | ✅ | 4 个事件，回血/扣血/遗物/卡牌 |
+| 事件 → 离开 | `event_finished` → `return_to_map()` | ✅ | 信号已连接 |
+| 返回地图 | `return_to_map()` → 重新加载 MapScreen | ✅ | 高亮下一层节点 |
+| Boss 战 | 地狱领主 ×1 | ✅ | 敌方数据正确传入 |
+| 战斗失败 | `_on_player_died()` → `combat_finished(false)` | ⚠️ | 信号发射，未监听处理后续 |
+| 结算界面 | `show_run_result()` → RunResult | ✅ | 显示胜/负/牌组统计 |
+| 结算 → 重新开始 | `restart_requested` → `show_main_menu()` | ✅ | |
+
+#### 综合评估
+
+| 类别 | 通过 | 警告 | 说明 |
+|:----:|:----:|:----:|------|
+| 语法编译 | 10 | 0 | 所有已知语法错误已修复 |
+| 场景切换 | 7 | 0 | 主菜单↔地图↔战斗↔奖励↔事件↔熔炉↔商店全闭环 |
+| 战斗核心 | 9 | 0 | 打牌/能量/效果/敌人意图/胜负判定全部正常 |
+| 常规节点 | 6 | 2 | 战斗/奖励/起点/事件/熔炉/商店 ✅；商店金币未同步 ⚠️；战斗失败后续处理 ⚠️ |
+| 存档系统 | 2 | 0 | SaveManager 读写 JSON 正常 |
+
 
 ### 🚀 快速启动
 

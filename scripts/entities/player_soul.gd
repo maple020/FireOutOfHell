@@ -11,6 +11,9 @@ signal player_died
 var current_hp: int = 80
 var block: int = 0
 
+@onready var _hp_bar: TextureProgressBar = $HPBar
+@onready var _block_bar: TextureProgressBar = $BlockBar
+
 
 func _ready() -> void:
 	current_hp = max_hp

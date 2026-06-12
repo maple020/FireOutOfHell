@@ -1,31 +1,89 @@
-[gd_scene load_steps=5 format=3 uid="uid://combat001"]
+[gd_scene load_steps=12 format=3 uid="uid://combat001"]
 
 [ext_resource type="Script" path="res://scripts/combat/combat_manager.gd" id="1_combat"]
 [ext_resource type="PackedScene" uid="uid://playersoul001" path="res://scenes/entities/player_soul.tscn" id="2_player"]
 [ext_resource type="Script" path="res://scripts/ui/screen_shake.gd" id="3_shake"]
 [ext_resource type="Script" path="res://scripts/combat/sound_manager.gd" id="4_sound"]
-[ext_resource type="PackedScene" uid="uid://enemy001" path="res://scenes/entities/enemy.tscn" id="5_enemy"]
+[ext_resource type="Theme" path="res://themes/hell_theme.tres" id="5_theme"]
 
 [node name="CombatScene" type="Node2D"]
 script = ExtResource("1_combat")
 
 [node name="CombatUI" type="CanvasLayer" parent="."]
 
+[node name="Background" type="ColorRect" parent="CombatUI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.08, 0.04, 0.02, 1)
+
 [node name="PlayerArea" type="Control" parent="CombatUI"]
-layout_mode = 3
-anchors_preset = 0
+layout_mode = 0
+offset_left = 40.0
+offset_top = 310.0
+offset_right = 440.0
+offset_bottom = 650.0
+
+[node name="PlayerLabel" type="Label" parent="CombatUI/PlayerArea"]
+layout_mode = 0
 offset_right = 400.0
-offset_bottom = 600.0
+offset_bottom = 30.0
+text = "灵魂收割者"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.8, 0.4, 1)
 
 [node name="PlayerSoul" parent="CombatUI/PlayerArea" instance=ExtResource("2_player")]
-position = Vector2(200, 300)
+position = Vector2(200, 190)
+
+[node name="PlayerInfoPanel" type="VBoxContainer" parent="CombatUI/PlayerArea"]
+layout_mode = 0
+offset_top = 300.0
+offset_right = 400.0
+offset_bottom = 340.0
+
+[node name="PlayerBlockLabel" type="Label" parent="CombatUI/PlayerArea/PlayerInfoPanel"]
+layout_mode = 2
+text = "护盾: 0"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.3, 0.7, 1, 1)
 
 [node name="EnemyArea" type="Control" parent="CombatUI"]
-layout_mode = 3
-anchors_preset = 0
-offset_left = 600.0
-offset_right = 1320.0
-offset_bottom = 400.0
+layout_mode = 0
+offset_left = 520.0
+offset_top = 100.0
+offset_right = 1420.0
+offset_bottom = 550.0
+
+[node name="BattleLabel" type="Label" parent="CombatUI"]
+layout_mode = 0
+offset_left = 300.0
+offset_top = 10.0
+offset_right = 800.0
+offset_bottom = 40.0
+text = "--- 战斗开始 ---"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.6, 0.2, 1)
+
+[node name="TurnLabel" type="Label" parent="CombatUI"]
+layout_mode = 0
+offset_left = 300.0
+offset_top = 40.0
+offset_right = 800.0
+offset_bottom = 70.0
+text = "回合 1 - 玩家回合"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+
+[node name="EnemyHintLabel" type="Label" parent="CombatUI"]
+layout_mode = 0
+offset_left = 520.0
+offset_top = 70.0
+offset_right = 1420.0
+offset_bottom = 100.0
+text = "点击敌人选择目标"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
 
 [node name="HandArea" type="HBoxContainer" parent="CombatUI"]
 anchors_preset = 7
@@ -41,6 +99,38 @@ grow_horizontal = 2
 grow_vertical = 0
 alignment = 1
 
+[node name="PileInfo" type="HBoxContainer" parent="CombatUI"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = -220.0
+offset_right = 300.0
+offset_bottom = -200.0
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+
+[node name="DrawPileLabel" type="Label" parent="CombatUI/PileInfo"]
+layout_mode = 2
+text = "抽牌: 0"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="DiscardLabel" type="Label" parent="CombatUI/PileInfo"]
+layout_mode = 2
+text = "弃牌: 0"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="ExhaustLabel" type="Label" parent="CombatUI/PileInfo"]
+layout_mode = 2
+text = "永劫: 0"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+
 [node name="EndTurnButton" type="Button" parent="CombatUI"]
 anchors_preset = 3
 anchor_left = 1.0
@@ -54,6 +144,7 @@ offset_bottom = -20.0
 grow_horizontal = 0
 grow_vertical = 0
 text = "结束回合"
+theme = ExtResource("5_theme")
 
 [node name="EnergyLabel" type="Label" parent="CombatUI"]
 anchors_preset = 1
@@ -62,11 +153,12 @@ anchor_top = 0.0
 anchor_right = 1.0
 anchor_bottom = 0.0
 offset_left = -200.0
-offset_top = 40.0
+offset_top = 10.0
 offset_right = -40.0
-offset_bottom = 80.0
+offset_bottom = 40.0
 text = "能量: 3/3"
 horizontal_alignment = 2
+theme_override_colors/font_color = Color(1, 0.4, 0.2, 1)
 
 [node name="SpeedToggleButton" type="Button" parent="CombatUI"]
 anchors_preset = 0
@@ -75,6 +167,7 @@ offset_top = 20.0
 offset_right = 160.0
 offset_bottom = 60.0
 text = "速度: 1x"
+theme = ExtResource("5_theme")
 
 [node name="ScreenShake" type="Node" parent="."]
 script = ExtResource("3_shake")
@@ -82,4 +175,5 @@ script = ExtResource("3_shake")
 [node name="SoundManager" type="Node" parent="."]
 script = ExtResource("4_sound")
 
-[node name="Enemies" type="Node" parent="CombatUI/EnemyArea"]
+[node name="Camera2D" type="Camera2D" parent="."]
+current = true

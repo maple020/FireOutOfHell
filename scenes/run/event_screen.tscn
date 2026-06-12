@@ -1,0 +1,33 @@
+[gd_scene load_steps=2 format=3 uid="uid://event001"]
+
+[ext_resource type="Script" path="res://scripts/run/event_screen.gd" id="1_event"]
+
+[node name="EventScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_event")
+
+[node name="TitleLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 150.0
+offset_right = 760.0
+offset_bottom = 200.0
+text = "事件"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DescLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 260.0
+offset_top = 250.0
+offset_right = 760.0
+offset_bottom = 450.0
+text = "事件描述..."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3

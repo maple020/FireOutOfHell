@@ -24,6 +24,19 @@ offset_right = 100.0
 offset_bottom = 100.0
 text = "熔炉"
 horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.8, 0.4, 1)
+
+[node name="HPInfoLabel" type="Label" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 110.0
+offset_right = 150.0
+offset_bottom = 150.0
+text = "生命: 80 / 80"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.5, 0.5, 1)
 
 [node name="OptionsContainer" type="VBoxContainer" parent="."]
 anchors_preset = 8
@@ -32,9 +45,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -200.0
-offset_top = -150.0
+offset_top = -100.0
 offset_right = 200.0
-offset_bottom = 150.0
+offset_bottom = 100.0
 alignment = 1
 
 [node name="HealButton" type="Button" parent="OptionsContainer"]

@@ -45,11 +45,28 @@ func generate(seed_value: int) -> Dictionary:
 	if _layers_nodes.size() > 0 and _layers_nodes[0].size() > 0:
 		_layers_nodes[0][0].type = MapNode.NodeType.START
 	
-	# 为每个节点添加 index 数据用于 UI 布局
+	# 为每个节点添加 index 数据用于 UI 布局，并分配敌人
 	for layer_idx in range(_layers_nodes.size()):
 		for node_idx in range(_layers_nodes[layer_idx].size()):
 			var node: MapNode = _layers_nodes[layer_idx][node_idx]
 			node.set_data("index", node_idx)
+			
+			# 为战斗/Boss节点分配敌人数据
+			if node.type == MapNode.NodeType.COMBAT:
+				# 根据层级选择敌人难度
+				if layer_idx <= 3:
+					node.set_data("enemy", "res://data/enemies/imp.tres")
+				elif layer_idx <= 7:
+					node.set_data("enemy", "res://data/enemies/hellhound.tres")
+				else:
+					# 深层混合敌人
+					var roll: float = _rng.randf()
+					if roll < 0.5:
+						node.set_data("enemy", "res://data/enemies/imp.tres")
+					else:
+						node.set_data("enemy", "res://data/enemies/hellhound.tres")
+			elif node.type == MapNode.NodeType.BOSS:
+				node.set_data("enemy", "res://data/enemies/boss_hell_lord.tres")
 	
 	return {
 		"nodes": _nodes,

@@ -9,6 +9,7 @@ signal leave_requested
 @onready var _upgrade_button: Button = $OptionsContainer/UpgradeButton
 @onready var _remove_button: Button = $OptionsContainer/RemoveButton
 @onready var _leave_button: Button = $LeaveButton
+@onready var _hp_label: Label = $HPInfoLabel
 
 var _selected_option: String = ""
 
@@ -18,6 +19,20 @@ func _ready() -> void:
 	_upgrade_button.pressed.connect(_on_upgrade_pressed)
 	_remove_button.pressed.connect(_on_remove_pressed)
 	_leave_button.pressed.connect(_on_leave_pressed)
+	_update_hp_display()
+
+
+func _update_hp_display() -> void:
+	var gm := get_node_or_null("/root/GameManager")
+	if gm != null:
+		var rm = gm.get_node_or_null("RunManager") as RunManager
+		if rm != null and _hp_label != null:
+			_hp_label.text = "生命: %d / %d" % [rm.current_hp, rm.max_hp]
+			if rm.current_hp == rm.max_hp:
+				_heal_button.disabled = true
+				_heal_button.text = "休息回血 (已满)"
+			if rm.deck.size() <= 1:
+				_remove_button.disabled = true
 
 
 func _on_heal_pressed() -> void:

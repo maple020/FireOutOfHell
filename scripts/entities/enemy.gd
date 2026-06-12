@@ -1,8 +1,7 @@
+@icon("res://icon.svg")
 class_name EnemyActor
 extends Node2D
 ## 战斗敌人实体，显示意图与状态。
-
-@icon("res://icon.svg")
 
 signal intent_updated(intent_id: String, value: int)
 signal enemy_died

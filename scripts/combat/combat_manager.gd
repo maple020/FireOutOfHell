@@ -8,8 +8,6 @@ const DamageEffect := preload("res://scripts/combat/effects/damage_effect.gd")
 const BlockEffect := preload("res://scripts/combat/effects/block_effect.gd")
 const DrawEffect := preload("res://scripts/combat/effects/draw_effect.gd")
 
-class_name CombatManager
-
 signal state_changed(new_state: CombatState.State)
 signal energy_changed(current_energy: int, max_energy: int)
 signal card_played(card_data: CardData, target: Node)
@@ -33,6 +31,9 @@ var max_energy: int = 3
 var deck_manager: DeckManager
 var effect_queue: EffectQueue
 var _selected_card: CardData
+var _enemies: Array[EnemyActor] = []
+var incoming_enemy_data: EnemyData = null
+var _turn_count: int = 0
 
 ## 动画倍率：1.0 = 正常，2.0 = 快速
 var animation_speed: float = 1.0
@@ -45,6 +46,12 @@ var animation_speed: float = 1.0
 @onready var _screen_shake: ScreenShake = get_node_or_null("ScreenShake")
 @onready var _sound_manager: SoundManager = get_node_or_null("SoundManager")
 @onready var _speed_toggle: Button = get_node_or_null("CombatUI/SpeedToggleButton")
+@onready var _turn_label: Label = get_node_or_null("CombatUI/TurnLabel")
+@onready var _battle_label: Label = get_node_or_null("CombatUI/BattleLabel")
+@onready var _enemy_hint_label: Label = get_node_or_null("CombatUI/EnemyHintLabel")
+@onready var _draw_pile_label: Label = get_node_or_null("CombatUI/PileInfo/DrawPileLabel")
+@onready var _discard_label: Label = get_node_or_null("CombatUI/PileInfo/DiscardLabel")
+@onready var _exhaust_label: Label = get_node_or_null("CombatUI/PileInfo/ExhaustLabel")
 
 
 func _ready() -> void:
@@ -73,12 +80,15 @@ func setup_combat_deck(deck_list: Array[CardData], seed_value: int = -1) -> void
 
 func start_player_turn() -> void:
 	_clear_target_selection()
+	_turn_count += 1
 	current_energy = max_energy
 	energy_changed.emit(current_energy, max_energy)
 	_ensure_deck_manager()
 	deck_manager.draw_to_hand_limit()
 	change_state(CombatState.State.PLAYER_TURN)
 	_prepare_enemy_intents()
+	_update_battle_ui()
+	_update_enemy_hint()
 
 
 func play_card(card_data: CardData, target: Node) -> void:
@@ -158,6 +168,8 @@ func _execute_enemy_turn() -> void:
 		var enemy_actor: EnemyActor = enemy as EnemyActor
 		if enemy_actor != null:
 			enemy_actor.execute_intent(_player_soul)
+	if _turn_label != null:
+		_turn_label.text = "回合 %d - 敌人回合" % _turn_count
 	change_state(CombatState.State.PLAYER_TURN)
 	start_player_turn()
 
@@ -246,6 +258,37 @@ func _on_cards_drawn(cards: Array[CardData]) -> void:
 
 func _on_piles_changed() -> void:
 	pile_sizes_changed.emit(deck_manager.get_pile_sizes())
+	_update_pile_labels()
+
+
+func _update_pile_labels() -> void:
+	if deck_manager == null:
+		return
+	var sizes := deck_manager.get_pile_sizes()
+	if _draw_pile_label != null:
+		_draw_pile_label.text = "抽牌: %d" % sizes.get("draw", 0)
+	if _discard_label != null:
+		_discard_label.text = "弃牌: %d" % sizes.get("discard", 0)
+	if _exhaust_label != null:
+		_exhaust_label.text = "永劫: %d" % sizes.get("exhaust", 0)
+
+
+func _update_battle_ui() -> void:
+	if _turn_label != null:
+		_turn_label.text = "回合 %d - 玩家回合" % _turn_count
+	if _battle_label != null and _turn_count == 1:
+		_battle_label.text = "--- 战斗开始 ---"
+
+
+func _update_enemy_hint() -> void:
+	if _enemy_hint_label == null:
+		return
+	var living := _get_living_enemies()
+	if living.size() > 1:
+		_enemy_hint_label.text = "点击敌人选择目标"
+		_enemy_hint_label.show()
+	else:
+		_enemy_hint_label.hide()
 
 
 func _on_enemy_selected(enemy: Node) -> void:
@@ -256,6 +299,10 @@ func _on_player_died() -> void:
 	if current_state == CombatState.State.VICTORY or current_state == CombatState.State.DEFEAT:
 		return
 	change_state(CombatState.State.DEFEAT)
+	if _battle_label != null:
+		_battle_label.text = "--- 战斗失败 ---"
+	if _turn_label != null:
+		_turn_label.text = "回合 %d - 失败" % _turn_count
 	# 播放失败音效
 	if _sound_manager != null:
 		_sound_manager.play_defeat()
@@ -268,6 +315,10 @@ func _on_enemy_died() -> void:
 	var living: Array[Node] = _get_living_enemies()
 	if living.is_empty():
 		change_state(CombatState.State.VICTORY)
+		if _battle_label != null:
+			_battle_label.text = "--- 战斗胜利！ ---"
+		if _turn_label != null:
+			_turn_label.text = "回合 %d - 胜利" % _turn_count
 		# 播放胜利音效
 		if _sound_manager != null:
 			_sound_manager.play_victory()
@@ -330,13 +381,22 @@ func _auto_start_combat() -> void:
 	if current_state == CombatState.State.IDLE:
 		# 确保有敌人
 		if _enemies.is_empty():
-			# 创建测试敌人
 			var enemy_scene := load("res://scenes/entities/enemy.tscn") as PackedScene
 			if enemy_scene != null:
-				var enemy_data := load("res://data/enemies/imp.tres")
-				for i in range(2):
+				# 优先使用传入的敌人数据，否则使用默认测试敌人
+				var actual_enemy_data: EnemyData = incoming_enemy_data
+				if actual_enemy_data == null:
+					actual_enemy_data = load("res://data/enemies/imp.tres")
+				incoming_enemy_data = null
+				
+				# 根据不同敌人数据决定生成数量
+				var enemy_count: int = 2
+				if actual_enemy_data.id == "hell_lord":
+					enemy_count = 1
+				
+				for i in range(enemy_count):
 					var enemy: EnemyActor = enemy_scene.instantiate()
-					enemy.enemy_data = enemy_data
+					enemy.enemy_data = actual_enemy_data
 					enemy.position = Vector2(200 + i * 200, 200)
 					get_node("CombatUI/EnemyArea").add_child(enemy)
 					_enemies.append(enemy)

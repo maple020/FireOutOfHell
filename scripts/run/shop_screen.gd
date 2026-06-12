@@ -19,6 +19,46 @@ var _consumable_buttons: Array[Button] = []
 
 func _ready() -> void:
 	_leave_button.pressed.connect(_on_leave_pressed)
+	_auto_setup_shop()
+
+
+func _auto_setup_shop() -> void:
+	var card_paths := [
+		"res://data/cards/hellfire_strike.tres",
+		"res://data/cards/soul_shield.tres",
+	]
+	var relic_paths := [
+		"res://data/relics/soul_shard.tres",
+	]
+	var consumable_paths := [
+		"res://data/consumables/healing_potion.tres",
+		"res://data/consumables/energy_draught.tres",
+	]
+	
+	var cards: Array = []
+	for path in card_paths:
+		if ResourceLoader.exists(path):
+			cards.append(load(path))
+	
+	var relics: Array = []
+	for path in relic_paths:
+		if ResourceLoader.exists(path):
+			relics.append(load(path))
+	
+	var consumables: Array = []
+	for path in consumable_paths:
+		if ResourceLoader.exists(path):
+			consumables.append(load(path))
+	
+	var gold: int = 150
+	var gm := get_node_or_null("/root/GameManager")
+	if gm != null:
+		var rm = gm.get_node_or_null("RunManager") as RunManager
+		if rm != null:
+			var seed_val: int = randi()
+			gold = 100 + (seed_val % 100)
+	
+	setup_shop(cards, relics, consumables, gold)
 
 
 func setup_shop(cards: Array, relics: Array, consumables: Array, gold: int) -> void:

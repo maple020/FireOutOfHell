@@ -47,5 +47,5 @@ func get_queue_size() -> int:
 	return _queue.size()
 
 
-func is_processing() -> bool:
+func is_queue_processing() -> bool:
 	return _is_processing

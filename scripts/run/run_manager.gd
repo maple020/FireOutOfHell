@@ -88,12 +88,30 @@ func get_available_nodes() -> Array[String]:
 	var nodes: Dictionary = map_data.get("nodes", {})
 	var available: Array[String] = []
 	
+	# 找到当前层级：基于已访问的节点确定当前层
+	var current_layer: int = -1
+	for node_id in visited_nodes:
+		var node = nodes.get(node_id, null)
+		if node is MapNodeClass:
+			if node.layer > current_layer:
+				current_layer = node.layer
+	
+	# 如果没有访问任何节点，允许访问第0层
+	if current_layer == -1:
+		current_layer = -1  # 下一层将是0层
+	
+	# 查找当前层+1的所有未访问节点
+	var target_layer: int = current_layer + 1
 	for node_id in nodes:
 		var node = nodes[node_id]
-		if node is MapNodeClass and not node.visited:
-			# 检查是否有已访问的前置节点连接
-			if node.layer == 0 or _has_visited_connection(node, nodes):
+		if node is MapNodeClass and not node.visited and node.layer == target_layer:
+			# 对于第0层，直接可用
+			if target_layer == 0:
 				available.append(node_id)
+			else:
+				# 检查是否有已访问的前置节点连接
+				if _has_visited_connection(node, nodes):
+					available.append(node_id)
 	
 	return available
 
